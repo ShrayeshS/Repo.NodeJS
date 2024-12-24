@@ -1,0 +1,4 @@
+steps:
+  - script : |
+        ls -R $(Agent.TempDirectory)               # List all files recursively in the Agent's temporary directory
+    displayName : 'List Files in Temp Directory'      # Display name for this step in the pipeline, indicating that it lists files in the temporary directory

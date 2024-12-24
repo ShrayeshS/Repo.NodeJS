@@ -1,0 +1,5 @@
+ steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '14.x'               # Specify the version of Node.js to install (version 14.x in this case)
+        displayName: 'Install Node.js'      # Display name for the task, indicating that Node.js is being installed

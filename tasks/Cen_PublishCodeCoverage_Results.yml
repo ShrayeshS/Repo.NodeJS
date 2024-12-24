@@ -1,0 +1,6 @@
+steps: 
+  - task : PublishCodeCoverageResults@2 
+    displayName : 'Publish Code Coverage Results'  # Display name for the task that publishes code coverage results
+    inputs:                                        # Specify the code coverage tool used (lcov in this case)
+        codeCoverageTool : 'lcov'                  
+        summaryFileLocation : '$(Build.SourcesDirectory)/**/coverage-report/lcov.info'   # Location of the summary file containing code coverage information

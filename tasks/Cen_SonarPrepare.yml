@@ -1,0 +1,28 @@
+steps:
+  - task: SonarQubePrepare@5              # Prepare SonarQube analysis using CLI mode with manual configuration
+    inputs:
+        SonarQube: 'My Sonaqube connection'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: '$(DSO-DevSecOps)'
+        cliProjectName: '$(DSO-DevSecOps)'
+        cliSources: './'
+        extraProperties: |
+          # Additional properties that will be passed to the scanner, 
+          # Put one key=value per line, example:
+          #sonar.exclusions=$(Build.SourcesDirectory)/**/artifacts/coverage/*
+           sonar.javascript.lcov.reportPaths=$(Build.SourcesDirectory)/coverage/lcov.info
+  - script: echo $(SONARQUBE_SCANNER_PARAMS)
+  - script: |
+      params=$(echo $SONARQUBE_SCANNER_PARAMS | sed 's/"sonar.pullrequest.branch":"[^ ]*",//')
+      echo $params
+      echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"
+  - script: |
+        params=$(echo $SONARQUBE_SCANNER_PARAMS | sed 's/"sonar.pullrequest.key":"[^ ]*",//')
+        echo $params
+        echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"
+  - script: |
+        params=$(echo $SONARQUBE_SCANNER_PARAMS | sed 's/"sonar.pullrequest.base":"[^ ]*",//')
+        echo $params
+        echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"
+  - script: echo $(SONARQUBE_SCANNER_PARAMS)

@@ -1,0 +1,13 @@
+parameters:
+  - name: ACRNAME                       # Parameter for specifying the Azure Container Registry name
+  - name: ACR_RG                        # Parameter for specifying the Azure Container Registry resource group
+  - name: REPO_NAME                     # Parameter for specifying the repository name
+       
+steps:
+  - script: |             # Build Docker image and push it to Azure Container Registry 
+          sudo az login --service-principal -u $(AZ_CLI_UNAME) -p $(AZ_CLI_PWD) --tenant $(TENANT_ID)   # Authenticate with Azure using service principal credentials
+          sudo az account set --subscription $(SUBSCRIPTION)                                              # Set the active subscription for Azure CLI commands
+          sudo az acr login --name ${{ parameters.ACRNAME }} --resource-group ${{ parameters.ACR_RG }}          # Login to the specified Azure Container Registry using provided parameters
+          sudo docker build -f Dockerfile.production -t ${{ parameters.ACRNAME }}.azurecr.io/${{ parameters.REPO_NAME }}:latest .  # Build the Docker image based on Dockerfile.production and tag it with latest version
+          sudo docker push ${{ parameters.ACRNAME }}.azurecr.io/${{ parameters.REPO_NAME }}                                        # Push the built Docker image to the specified Azure Container Registry
+    displayName: 'Build Docker Image'                                                                                              # Display name for this step in the pipeline

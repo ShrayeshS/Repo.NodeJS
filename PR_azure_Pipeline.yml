@@ -1,0 +1,38 @@
+#trigger: none
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - '*'
+
+pr: 
+  branches:
+    include:
+      - '*'
+pool:
+  name: 'Integration Agent Pool'
+
+variables:
+  - template: variables/Cen_application_variables.yml
+
+stages:
+ - template: stages/cen_nodejs_PR_stage.yml  #Include the stage-level template
+   parameters:
+     stageName: 'PRValidation' # Specify the stage name
+     condition: eq(variables['Build.Reason'], 'PullRequest')
+   
+ - template: stages/cen_nodejs_CI_stage.yml  # Include the stage-level template
+   parameters:
+     stageName: 'CI'  # Specify the stage name
+     condition: ne(variables['Build.Reason'], 'PullRequest')
+
+ - template: stages/cen_nodejs_CD_stage.yml  # Include the stage-level template
+   parameters:
+     stageName: 'CD'  # Specify the stage name
+     condition: and(eq(dependencies.PRValidation.result, 'Skipped'), eq(dependencies.CI.result, 'Succeeded'), ne(variables['Build.Reason'], 'PullRequest'))
+     dependsOn:
+       - PRValidation
+       - CI
+ 

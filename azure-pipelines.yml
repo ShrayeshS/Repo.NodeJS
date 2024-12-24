@@ -1,0 +1,215 @@
+trigger: 
+- none
+
+pool:
+  name: 'SonarQube Integration Agent Pool'
+
+variables:
+  - name: buildConfiguration
+    value: 'Release'
+  - name: DSO-DevSecOps
+    value: 'DevSecOps'
+  - name: SONAR_TOKEN
+    value: ''
+  - name: DXO_SonarQube
+    value: 'https://sonarqube.com/'
+  - name: ProjectPath
+    value: $(Build.SourcesDirectory)/calculator-master/calculator-master/coverage-report/lcov.info
+  - name: TENANT_ID
+    value: ''
+  - name: SUBSCRIPTION
+    value: ''
+  - name: AZCLIUNAME
+    value: ''
+  - name: AZCLIPWD
+    value: ''
+  - name: ACRNAME
+    value: 'containerregistry'
+  - name: ACR_RG
+    value: 'DSOKITTest'
+  - name: REPO_NAME
+    value: 'myappnode'   
+  - name: project #The Node.js project that hold the application code
+    value: 'calculator'
+  - name: projectTest
+    value: 'CalculatorTest'
+  - name: AKS_RG
+    value: 'DSOKITTest' #AKS Resource Group
+  - name: K8S_CLUSTER
+    value: 'K8S_Agent' # AKS Cluster Name
+  - name: SUBSCRIPTION_SC
+    value: 'Service_Connection' #Service Connection to the Subscription containg the AKS
+  - name: ACR_SC
+    value: 'Docker-ADO connection' # Service Connection to the ACR
+  - name: containerAppName 
+    value: 'container-app'
+  - name: containerAppEnvironment
+    value: 'container-app-env'
+
+stages:                                        # Define stages of the pipeline
+- stage: SonarQube_Analysis
+  displayName: "SonarQube Analysis"
+  jobs:
+  - job: SonarQube_Job
+    displayName: "Run SonarQube Analysis"
+    pool:
+      name: 'SonarQube Integration Agent Pool'
+
+    steps:
+    - task: NodeTool@0              # Install Node.js using NodeTool task
+      inputs:
+        versionSpec: '14.x'
+        displayName: 'Install Node.js'
+
+    - script: |                       # Install Istanbul and related packages for code analysis
+        cd $(Build.SourcesDirectory)/calculator-master/calculator-master
+        #npm install nyc istanbul-lib-coverage istanbul-reports lcov-result-merger --save-dev
+        npm install nyc istanbul-lib-coverage istanbul-reports lcov-result-merger mocha chai glob supertest express --save-dev
+      displayName: 'Install Istanbul and related packages'
+
+    - script : |                      
+        node app.js &   # Start your application if necessary for testing purposes
+        sleep 10       # Wait for application to start (adjust as needed)
+        npx istanbul cover _mocha -- tests/test.js --report lcovonly -- -R spec
+        pkill -f "node app.js"  # Stop the application
+      displayName : 'Run Unit Tests with Mocha and Generate Code Coverage'
+
+    - task: Bash@3       # Additional task to address STDIO stream closure issue
+      inputs:
+        targetType: 'inline'
+        script: |
+          sleep 10   # Add a delay to ensure proper closing of STDIO streams after test execution
+      displayName: 'Delay for Proper Stream Closure'
+   
+    - script : |                      # List files in the temporary directory for debugging purposes
+        ls -R $(Agent.TempDirectory)
+      displayName : 'List Files in Temp Directory' 
+
+
+    - task: SonarQubePrepare@5              # Prepare SonarQube analysis using CLI mode with manual configuration
+      inputs:
+        SonarQube: 'My Sonaqube connection'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: '$(DSO-DevSecOps)'
+        cliProjectName: '$(DSO-DevSecOps)'
+        cliSources: './'
+        extraProperties: |
+          # Additional properties that will be passed to the scanner, 
+          # Put one key=value per line, example:
+          #sonar.exclusions=$(Build.SourcesDirectory)/**/artifacts/coverage/*
+           sonar.javascript.lcov.reportPaths=$(Build.SourcesDirectory)/coverage/lcov.info
+          - script: echo $(SONARQUBE_SCANNER_PARAMS)
+    - script: |
+        params=$(echo $SONARQUBE_SCANNER_PARAMS | sed 's/"sonar.pullrequest.branch":"[^ ]*",//')
+        echo $params
+        echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"
+    - script: |
+        params=$(echo $SONARQUBE_SCANNER_PARAMS | sed 's/"sonar.pullrequest.key":"[^ ]*",//')
+        echo $params
+        echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"
+    - script: |
+        params=$(echo $SONARQUBE_SCANNER_PARAMS | sed 's/"sonar.pullrequest.base":"[^ ]*",//')
+        echo $params
+        echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"
+    - script: echo $(SONARQUBE_SCANNER_PARAMS)
+
+    - task : PublishCodeCoverageResults@2   # Publish code coverage results using lcov format  
+      displayName : 'Publish Code Coverage Results'
+      inputs :
+        codeCoverageTool : 'lcov'
+        summaryFileLocation : '$(Build.SourcesDirectory)/**/coverage-report/lcov.info'
+
+    - task : SonarQubeAnalyze@5             # Execute SonarQube analysis task
+      inputs:
+          jdkversion: 'JAVA_HOME_11_X64'   
+          
+
+    - task : SonarQubePublish@5         # Publish code analysis results to SonarQube server 
+      inputs :
+        pollingTimeoutSec : 300 
+
+#    - script : |                    # Check quality gate status from SonarQube API
+#          qualityGateStatus=$(curl -u $(SONAR_TOKEN): "$(DXO_SonarQube)api/qualitygates/project_status?projectKey=$(DSO-DevSecOps)")
+#          
+#          table_data=$(echo "$qualityGateStatus" | jq -r '.projectStatus.conditions[] | [.status, .metricKey, .comparator, .errorThreshold, .actualValue] | @tsv')
+#          
+#          echo -e "Status\tMetric Key\tComparator\tError Threshold\tActual Value" | awk '{printf "%-10s%-30s%-10s%-15s%-12s\n", $1, $2, $3, $4, $5}'
+#          echo 
+#
+#          while IFS=$'\t' read -r status metricKey comparator errorThreshold actualValue; do
+#            printf "%-10s%-30s%-10s%-15s%-12s\n" "$status" "$metricKey" "$comparator" "$errorThreshold" "$actualValue"
+#            echo  
+#          done <<< "$table_data"
+#
+#          statusValue=$(echo "$qualityGateStatus" | jq -r '.projectStatus.status')
+#          echo "Quality Gate Status : $statusValue"
+
+#          if [ "$statusValue" != "OK" ]; then
+#            echo "Sonarqube Quality Gate not passed"
+#            exit 1
+#          else 
+#            echo "Continue with other tasks"
+#          fi
+
+
+- stage: Build_Image
+  displayName: 'Build Docker Image'
+  jobs:
+  - job: 
+    steps:
+      - task: AzureKeyVault@2
+        inputs:
+          azureSubscription: 'ARGOCD_CONNECTION-dxo' # Service connection for the Azure subscription containing the Azure Key Vault instance
+          KeyVaultName: 'KeyVault' # Name of the Azure Key Vault instance
+          SecretsFilter: 'TENANTID , SUBSCRIPTION' # The secrets that need to be downloaded. '*' indicates all secrets
+          RunAsPreJob: true # Runs the task before the job execution begins. Exposes secrets to all tasks in the job, not just tasks that fo
+      
+      #- script: |
+         #curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+         #displayName: 'Install Azure CLI'
+
+      - script: |
+         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+         chmod +x kubectl
+         sudo mv kubectl /usr/local/bin/
+        displayName: 'Install kubectl'
+     
+      - script: |             # Build Docker image and push it to Azure Container Registry 
+          sudo az login --service-principal -u $(AZCLIUNAME) -p $(AZCLIPWD) --tenant $(TENANTID)
+          sudo az account set --subscription $(SUBSCRIPTION)
+          sudo az acr login --name ${{variables.ACRNAME }} --resource-group ${{ variables.ACR_RG }}
+          sudo docker build -f Dockerfile.production -t ${{variables.ACRNAME }}.azurecr.io/${{ variables.REPO_NAME }}:latest .
+          #sudo docker build -f Dockerfile.test -t ${{variables.ACRNAME }}.azurecr.io/${{ variables.REPO_NAME }}:test .
+          sudo docker push ${{ variables.ACRNAME }}.azurecr.io/${{ variables.REPO_NAME }}          
+        displayName: 'Build Production Docker Image'
+
+      
+       
+- stage: Deploy
+  displayName: 'Deploy to AKS & ACS'
+  jobs:
+    - job: 
+      steps:
+        - task: AzureContainerApps@1
+          displayName: Build and deploy Container App
+          inputs:
+            azureSubscription: 'ARGOCD_CONNECTION-dxo'
+            imageToDeploy: '${{ variables.ACRNAME }}.azurecr.io/${{ variables.REPO_NAME }}:latest'
+            containerAppName: 'amit-container-app'
+            resourceGroup: 'DSOKITTest'
+            containerAppEnvironment: 'amit-container-app-env'
+      
+        - task: Kubernetes@1
+          displayName: Build and deploy AKS
+          inputs:
+            connectionType: 'Azure Resource Manager'
+            azureSubscriptionEndpoint: '${{ variables.SUBSCRIPTION_SC  }}'
+            azureContainerRegistry: '${{ variables.ACR_SC }}'
+            azureResourceGroup: '${{ variables.AKS_RG }}'
+            kubernetesCluster: '${{ variables.K8S_CLUSTER}}'
+            command: 'apply'
+            arguments: '-f $(Build.SourcesDirectory)/k8s.yml' # Path to your Kubernetes deployment file
+        
+
+

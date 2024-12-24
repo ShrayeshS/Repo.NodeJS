@@ -1,0 +1,10 @@
+jobs:                             # Define a job in the Azure Pipeline
+  - job:
+    steps:
+      - template: ../tasks/Cen_Build_Deploy_Container_App.yml   # Include a template for building and deploying containerized applications
+      - template: ../tasks/Cen_Build_Deploy_AKS.yml            # Include a template for building and deploying to Azure Kubernetes Service (AKS)
+        parameters:
+          SUBSCRIPTION_SC: $(SUBSCRIPTION_SC)                # Pass the Subscription Service Connection as a parameter
+          ACR_SC: $(ACR_SC)                                   # Pass the Azure Container Registry Service Connection as a parameter
+          AKS_RG: $(AKS_RG)                                  # Pass the AKS Resource Group as a parameter
+          K8S_CLUSTER: $(K8S_CLUSTER)                      # Pass the AKS Cluster Name as a parameter

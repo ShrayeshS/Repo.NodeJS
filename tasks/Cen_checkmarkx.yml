@@ -1,0 +1,14 @@
+steps:
+  - task: Application security testing@2023         
+    displayName: 'Running Checkmarkx'                # Display name for the task running Checkmarx application security testing
+    inputs:
+      projectName: 'DSO_Checkmarx'                   # Specify the project name for Checkmarx scanning
+      enableProxy: false                             # Set whether to enable proxy for the scan (false in this case)
+      enableSastScan: true                                # Enable Static Application Security Testing (SAST) scan
+      CheckmarxService: 'Checkmarx_Integration-dxo'      # Specify the Checkmarx service for integration
+      preset: 'OWASP TOP 10 - 2021'                       # Choose the preset for the scan (OWASP TOP 10 - 2021 in this case)
+      incScan: false                                  # Set whether to include incremental scans (false in this case)
+      generatePDFReport: true                          # Specify to generate a PDF report after the scan
+      enableDependencyScan: true                           # Enable Dependency Scan for checking dependencies
+      dependencyServerURL: 'Checkmarx_Integration_SCA-dxo'   # Specify the URL for Dependency Scan server
+      includeSource: true                                     # Include source code in the scan process

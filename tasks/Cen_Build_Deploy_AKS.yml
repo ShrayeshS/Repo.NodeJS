@@ -1,0 +1,17 @@
+parameters:
+  - name: SUBSCRIPTION_SC                                      # Azure subscription parameter for connecting to Azure Resource Manager
+  - name: ACR_SC                                               # Azure Container Registry parameter for specifying the ACR to use
+  - name: AKS_RG                                                # Azure Resource Group parameter where the AKS cluster is located
+  - name: K8S_CLUSTER                                             # Kubernetes cluster parameter for specifying the target cluster
+
+steps:
+   - task: Kubernetes@1
+     displayName: Build and deploy AKS                          # Display name for the task that builds and deploys to AKS
+     inputs:
+       connectionType: 'Azure Resource Manager'                           # Type of connection to use (Azure Resource Manager)
+       azureSubscriptionEndpoint: '${{ parameters.SUBSCRIPTION_SC  }}'     # Specify the Azure subscription endpoint using the provided parameter
+       azureContainerRegistry: '${{ parameters.ACR_SC }}'                    # Specify the Azure Container Registry using the provided parameter
+       azureResourceGroup: '${{ parameters.AKS_RG }}'                        # Specify the Azure Resource Group where the AKS cluster is located
+       kubernetesCluster: '${{ parameters.K8S_CLUSTER}}'                     # Specify the target Kubernetes cluster using the provided parameter
+       command: 'apply'                                                        # Command to apply changes to Kubernetes resources
+       arguments: '-f $(Build.SourcesDirectory)/k8s.yml' # Path to your Kubernetes deployment file

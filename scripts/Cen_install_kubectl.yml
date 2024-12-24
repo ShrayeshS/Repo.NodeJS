@@ -1,0 +1,6 @@
+steps:
+  - script: |
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" # Download the kubectl binary for Linux AMD64 from the Kubernetes release page
+      chmod +x kubectl                         # Make the downloaded kubectl binary executable
+      sudo mv kubectl /usr/local/bin/           # Move the kubectl binary to /usr/local/bin/ directory for global accessibility
+    displayName: 'Install kubectl'              # Display name for this step in the pipeline, indicating that it installs kubectl

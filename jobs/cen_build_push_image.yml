@@ -1,0 +1,12 @@
+jobs:              # Define a job in the Azure Pipeline
+  - job:
+    steps:
+      - template: ../tasks/Cen_keyVault_connect.yml     # Include a template for connecting to KeyVault
+      - template: ../scripts/Cen_install_kubectl.yml     # Include a template for installing kubectl
+      - template: ../scripts/Cen_docker_build_push.yml   # Include a template for building and pushing Docker images
+        parameters:
+            ACRNAME: $(ACRNAME)                       # Pass the Azure Container Registry name as a parameter
+            ACR_RG: $(ACR_RG)                         # Pass the Azure Container Registry Resource Group as a parameter
+            REPO_NAME: $(REPO_NAME)                   # Pass the repository name as a parameter
+      - template: ../tasks/Cen_checkmarkx.yml         # Include a template for performing specific checks or tasks after Docker operations
+        

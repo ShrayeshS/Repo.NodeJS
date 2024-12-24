@@ -1,0 +1,13 @@
+jobs:                                         # Define a job named SonarQube_Job in the Azure Pipeline
+  - job: SonarQube_Job
+    steps:
+      - template: ../tasks/Cen_Install_Node.js.yml                     # Include a template for installing Node.js
+      - template: ../scripts/Cen_Install_Istanbul_Packages.yml          # Include a template for installing Istanbul packages
+      - template: ../scripts/Cen_List_Files_TempDirectory.yml         # Include a template for listing files in the temporary directory
+      - template: ../tasks/Cen_SonarPrepare.yml                           # Include a template for preparing the project for SonarQube analysis
+      - template: ../scripts/Cen_Node.js_build.yml                       # Include a script template for building Node.js project
+      #- template: ../scripts/Cen_Node.js_test.yml
+      #- template: ../tasks/Cen_PublishCodeCoverage_Results.yml
+      #- template: ../tasks/Cen_SonarQubeAnalyze.yml
+      #- template: ../tasks/Cen_SonarQubePublish.yml
+      #- template: ../scripts/Cen_Check_QualityGateStatus.yml

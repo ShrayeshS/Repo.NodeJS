@@ -1,0 +1,24 @@
+parameters:
+  - name: stageName
+    type: string
+    default: ''
+  - name: condition
+    type: string
+    default: ''
+  - name: dependsOn
+    type: object
+    default: []
+  - name: DsoDevSecOps
+    type: string
+    default: ''
+  - name: sonarQubeRunAnalysis
+    type: string
+    default: ''
+
+stages:
+ - stage: ${{ parameters.stageName }}         # Define a stage with the specified stage name parameter
+   condition: ${{ parameters.condition }}     # Set the condition for running this stage based on the provided condition parameter
+   dependsOn: ${{ parameters.dependsOn }}     # Specify any dependencies for this stage based on the provided dependsOn parameter
+   jobs:
+    - template: ../jobs/cen_deploy_to_aks_aca.yml  # Use a job template to define the jobs within this stage
+    

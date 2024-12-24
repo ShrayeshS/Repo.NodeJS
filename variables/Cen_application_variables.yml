@@ -1,0 +1,41 @@
+variables:
+  - name: buildConfiguration
+    value: 'Release'
+  - name: DSO-DevSecOps
+    value: 'DevSecOps'
+  - name: SONAR_TOKEN
+    value: ''
+  - name: DXO_SonarQube
+    value: 'https://sonarqube.com/'
+  - name: ProjectPath
+    value: $(Build.SourcesDirectory)/calculator-master/calculator-master/coverage-report/lcov.info
+  - name: AZ_CLI_UNAME
+    value: ''
+  - name: AZ_CLI_PWD
+    value: ''
+  - name: TENANT_ID
+    value: ''
+  - name: SUBSCRIPTION
+    value: ''
+  - name: ACRNAME
+    value: 'containerregistry'
+  - name: ACR_RG
+    value: 'KITTest'
+  - name: REPO_NAME
+    value: 'myappnode'   
+  - name: project #The Node.js project that holds the application code
+    value: 'calculator'
+  - name: projectTest
+    value: 'CalculatorTest'
+  - name: AKS_RG
+    value: 'KITTest' #AKS Resource Group
+  - name: K8S_CLUSTER
+    value: 'K8S_Agent' # AKS Cluster Name
+  - name: SUBSCRIPTION_SC
+    value: 'Service_Connection' #Service Connection to the Subscription containg the AKS
+  - name: ACR_SC
+    value: 'Docker-ADO connection' # Service Connection to the ACR
+  - name: containerAppName 
+    value: 'container-app'
+  - name: containerAppEnvironment
+    value: 'container-app-env'

@@ -1,0 +1,9 @@
+steps:
+  - task: AzureContainerApps@1                             
+    displayName: Build and deploy Container App               # Display name for the task that builds and deploys a Container App    
+    inputs:                                                           
+      azureSubscription: 'ARGOCD_CONNECTION-dxo'                                    # Specify the Azure subscription to use for deployment
+      imageToDeploy: '${{ variables.ACRNAME }}.azurecr.io/${{ variables.REPO_NAME }}:latest'      # Define the image to deploy using Azure Container Registry (ACR)
+      containerAppName: 'amit-container-app'                                                      # Name of the container application being deployed
+      resourceGroup: 'DSOKITTest'                                                                 # Resource group where the container app will be deployed
+      containerAppEnvironment: 'amit-container-app-env'                                           # Environment configuration for the container application

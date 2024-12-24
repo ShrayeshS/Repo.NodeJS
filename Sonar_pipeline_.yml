@@ -1,0 +1,55 @@
+trigger: 
+- none
+
+pool:
+  name: 'SonarQube Integration Agent Pool'
+
+variables:
+  - template: variables/Cen_application_variables.yml
+
+stages:                                        # Define stages of the pipeline
+- stage: SonarQube_Analysis
+  displayName: "SonarQube Analysis"
+  jobs:
+  - job: SonarQube_Job
+    displayName: "Run SonarQube Analysis"
+    pool:
+      name: 'SonarQube Integration Agent Pool'
+
+    steps:
+       - template: tasks/Cen_Install_Node.js.yml
+       - template: scripts/Cen_Install_Istanbul_Packages.yml
+       - template: scripts/Cen_Node.js_test.yml
+       - template: scripts/Cen_List_Files_TempDirectory.yml
+       - template: tasks/Cen_SonarPrepare.yml
+       #- template: tasks/Cen_PublishCodeCoverage_Results.yml
+       - template: tasks/Cen_SonarQubeAnalyze.yml
+       - template: tasks/Cen_SonarQubePublish.yml
+       #- template: scripts/Cen_Check_QualityGateStatus.yml
+     
+
+- stage: Build_Image
+  displayName: 'Build Docker Image'
+  jobs:
+  - job: 
+    steps:
+       - template: tasks/Cen_keyVault_connect.yml 
+       - template: scripts/Cen_install_kubectl.yml
+       - template: scripts/Cen_docker_build_push.yml
+         parameters:
+           ACRNAME: $(ACRNAME)
+           ACR_RG: $(ACR_RG)
+           REPO_NAME: $(REPO_NAME)
+            
+- stage: Deploy
+  displayName: 'Deploy to AKS & ACS'
+  jobs:
+    - job: 
+      steps:
+        - template: tasks/Cen_Build_Deploy_Container_App.yml 
+        - template: tasks/Cen_Build_Deploy_AKS.yml
+          parameters:
+            SUBSCRIPTION_SC: $(SUBSCRIPTION_SC)
+            ACR_SC: $(ACR_SC)
+            AKS_RG: $(AKS_RG)
+            K8S_CLUSTER: $(K8S_CLUSTER)

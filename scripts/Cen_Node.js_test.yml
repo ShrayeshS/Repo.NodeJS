@@ -1,0 +1,7 @@
+steps:
+   - script : |                      
+        node app.js &   # Start your application if necessary for testing purposes
+        sleep 10       # Wait for application to start (adjust as needed)
+        npx istanbul cover _mocha -- tests/test.js --report lcovonly -- -R spec
+        pkill -f "node app.js"  # Stop the application
+     displayName : 'Run Unit Tests with Mocha and Generate Code Coverage'

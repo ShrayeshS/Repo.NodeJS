@@ -1,0 +1,6 @@
+steps:
+    - script: |                       # Install Istanbul and related packages for code analysis
+        cd $(Build.SourcesDirectory)/calculator-master/calculator-master
+        #npm install nyc istanbul-lib-coverage istanbul-reports lcov-result-merger --save-dev
+        npm install nyc istanbul-lib-coverage istanbul-reports lcov-result-merger mocha chai glob supertest express --save-dev
+      displayName: 'Install Istanbul and related packages'

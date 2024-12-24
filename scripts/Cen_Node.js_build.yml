@@ -1,0 +1,5 @@
+steps:
+  - script : |
+        cd $(Build.SourcesDirectory)/calculator-master/calculator-master  # Change directory to the project directory where the source code is located
+        npm run build --if-present                                        # Run the build script of the project, if it exists 
+    displayName : 'Build project'                                         # Display name for this step in the pipeline, indicating that it builds the project

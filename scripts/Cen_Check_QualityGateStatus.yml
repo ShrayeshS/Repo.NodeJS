@@ -1,0 +1,24 @@
+steps:
+  - script : |
+          qualityGateStatus=$(curl -u $(SONAR_TOKEN): "$(DXO_SonarQube)api/qualitygates/project_status?projectKey=$(DSO-DevSecOps)")                                  # Retrieve the quality gate status from SonarQube API using the provided credentials
+          
+          table_data=$(echo "$qualityGateStatus" | jq -r '.projectStatus.conditions[] | [.status, .metricKey, .comparator, .errorThreshold, .actualValue] | @tsv')     # Extract table data for status, metric key, comparator, error threshold, and actual value using jq
+          
+          echo -e "Status\tMetric Key\tComparator\tError Threshold\tActual Value" | awk '{printf "%-10s%-30s%-10s%-15s%-12s\n", $1, $2, $3, $4, $5}'     # Display a formatted header for the data table
+          echo 
+
+          while IFS=$'\t' read -r status metricKey comparator errorThreshold actualValue; do                                 # Iterate through each row of data and display it in a formatted table format
+            printf "%-10s%-30s%-10s%-15s%-12s\n" "$status" "$metricKey" "$comparator" "$errorThreshold" "$actualValue"
+            echo  
+          done <<< "$table_data"
+
+          statusValue=$(echo "$qualityGateStatus" | jq -r '.projectStatus.status')                               # Get the overall status value of the quality gate result
+          echo "Quality Gate Status : $statusValue"
+
+          if [ "$statusValue" != "OK" ]; then
+            echo "Sonarqube Quality Gate not passed"                                  # Display the overall Quality Gate status
+            exit 1
+          else 
+            echo "Continue with other tasks"
+          fi
+

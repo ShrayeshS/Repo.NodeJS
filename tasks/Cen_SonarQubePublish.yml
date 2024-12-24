@@ -1,0 +1,4 @@
+steps:
+  - task : SonarQubePublish@5 
+    inputs :
+        pollingTimeoutSec : 300  # Set the polling timeout in seconds for the SonarQube analysis to complete (300 seconds in this case)
